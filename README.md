@@ -1,5 +1,6 @@
 Requirements:
 
+- DONE Be able to spin up a new droplet and have it automatically in config management.
 - Be able to spin up a new droplet and have it ready to go with Docker and my preferred env.
 - Take an action across all Docker droplets.
 - Chromebook (and other clients like vagrant on Windows) register with config master for env updates. SECURITY!
@@ -100,18 +101,82 @@ Note that `salt-key -A` will accept all keys currently awaiting acceptance.
 
 ## Command your minion
 
-You send *functions* to your minions.
+Minions will only execute *functions* that are known to Salt. They have names like `test.ping`.
 
-    # You can address a specific minion, here with a basic ping:
+[Full module list](http://docs.saltstack.com/en/latest/ref/modules/all/index.html#all-salt-modules).
+
+    # You can address a specific minion:
     $ sudo salt salt01 test.ping
     salt01:
         True
     # or address all minions to dump their IPs:
-    $ sudo salt * network.ip_addrs
+    $ sudo salt '*' network.ip_addrs
     salt01:
         - 104.131.47.206
 
-## Do something useful
+You can get away with not escaping the * asterisk but it's probably not a great idea.
+
+The `cmd.run` function does allow arbitrary shell commands though:
+
+    $ sudo salt '*' cmd.run 'uname -a'
+    salt01:
+        Linux salt01 3.13.0-24-generic #47-Ubuntu SMP Fri May 2 23:30:00 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
+
+## How to generate minions easily?
+
+So we're down to two steps:
+1. Create a droplet
+2. Log in and install `salt-minion`.
+
+How to automate this? Let's snapshot the minion as a template. First we need to power it off remotely:
+
+    $ sudo salt salt01 system.poweroff
+    salt01:
+
+And snapshot it in the web console. When that finishes, create a new droplet `salt02` from the image.
+
+The new node looks good. It should generate its minion ID from the hostname.
+
+It does not however show up on the master. Running in debug, we can see we have cached leftovers from salt01:
+
+    # service salt-minion stop
+    salt-minion stop/waiting
+    # salt-minion -l debug
+    [DEBUG   ] Reading configuration from /etc/salt/minion
+    [INFO    ] Using cached minion ID from /etc/salt/minion_id: salt01
+    ...
+
+Whoops. Time to erase our cached identity to create a true template - [credit to this post](http://superuser.com/questions/695917/how-to-make-salt-minion-generate-new-keys):
+
+    # service salt-minion stop
+    # rm /etc/salt/pki/minion/minion_master.pub
+    # rm /etc/salt/pki/minion/minion.*
+    # cat /dev/null >/etc/salt/minion_id
+
+Take a new snapshot and destroy `salt02`, then recreate from the image. Your SSH client may freak out at the server key changing - I needed to remove the IP from `known_hosts` to forget the old server.
+
+The new minion will generate a new identity on startup - based on its hostname - and show immediately in the master:
+
+    $ sudo salt-key -L
+    Accepted Keys:
+    salt01
+    Unaccepted Keys:
+    salt02
+    Rejected Keys:
+
+So let's sanity check and we can start doing real work:
+
+    $ sudo salt-key -A -y
+    The following keys are going to be accepted:
+    Unaccepted Keys:
+    salt02
+    Key for minion salt02 accepted.
+    $ sudo salt-key -L
+    Accepted Keys:
+    salt01
+    salt02
+    Unaccepted Keys:
+    Rejected Keys:
 
 ## Misc
 
