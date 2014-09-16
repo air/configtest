@@ -5,179 +5,112 @@ Requirements:
 - Take an action across all Docker droplets.
 - Chromebook (and other clients like vagrant on Windows) register with config master for env updates. SECURITY!
 
-# Creating the config master droplet
-
-Use SSH key to log in as root:
+# How we want to initiate new servers
 
     # apt-get update
     # apt-get dist-upgrade -y
     # reboot
     # apt-get upgrade -y
     # apt-get autoremove -y
-    # adduser salt
-    # visudo
 
-In visudo you want:
+# Salt concepts
 
-    # User privilege specification
-    root    ALL=(ALL:ALL) ALL
-    salt    ALL=(ALL:ALL) ALL
+Grain - a grain of information about a minion. Sent from minion -> master. Used for targeting commands.
+Pillar - a tree of data kept on the master. Sent from master -> minions on a need-to-know basis. A State can have parameters filled in with data taken from a Pillar.
+Nodegroup - a logical group of minions defined by a bunch of selectors. Used for targeting commands.
+State - 
 
-Log out root and `ssh salt@config` to get back in and go to Salt section.
+# Set up master State
 
-# Chef
+Ever used `/srv` before? It's where you keep data for services, as defined in http://www.tldp.org/LDP/Linux-Filesystem-Hierarchy/html/srv.html
 
-# Puppet
+[Reference for file.managed](http://salt.readthedocs.org/en/latest/ref/states/all/salt.states.file.html). You will be using this **a lot**.
 
-# Ansible
+## IDEMPOTENCY
 
-# Saltstack
+You define the target state. The tool will try to get there. If it's already there, you can keep running the tool and nothing bad will happen.
 
-You need a Salt *master*. Your nodes have a *minion* client installed and told where the master is. The master then sends commands to minions.
+# Understanding States
 
-By default the Salt master listens on ports 4505 and 4506 on all interfaces (0.0.0.0).
+## 1. Standalone formula
 
-## Install master
+Make the vim.sls and the vimrc. The master will pick up new stuff at runtime, no refresh needed.
 
-As user salt:
+    vim:
+      pkg:
+        - installed
 
-    $ sudo echo ok
-    $ sudo add-apt-repository -y ppa:saltstack/salt
-    $ sudo apt-get update
-    $ sudo apt-get install -y salt-master
-    $ service --status-all 2>&1 | grep salt
-    # You should see ` [ + ]  salt-master`.
-    $ sudo salt-key -L
-    # You should see an empty list of keys.
+    /etc/vimrc:
+      file.managed:
+        - require:
+          - pkg: vim
+        - source: salt://vimrc
+        - mode: 644
+        - user: root
+        - group: root
 
-The master log can be viewed with `cat /var/log/salt/master` but with default settings, unless something goes wrong this file will be empty.
+Note:
 
-## Set up a minion
+- The first line is the **ID Declaration**. This is your formula name (`vim` here). When you invoke this formula, everything in this file will be executed.
+- `pkg` is a **state module** for doing fun things with Linux packages. [List of state modules](http://docs.saltstack.com/en/latest/ref/states/all/index.html).
+  - For convenience, `pkg` assumes that the parent key (`vim` here) is an installable package name. If it isn't, you'll need `-name: foo`.
+- The `salt://` protocol is just the filesystem based at `/srv/salt`.
+- Lines 2 and 3 can be short-handed into just `pkg.installed`. This is a YAMLism.
 
-Create a new droplet, log in as root:
+This is a formula. The naming of the formula is the `vim:` line. The filename could be anything.
 
-    # add-apt-repository -y ppa:saltstack/salt
-    # apt-get update
-    # apt-get install -y salt-minion
-    # service --status-all 2>&1 | grep salt
-    # vi /etc/salt/minion
-    # # set master: <IP>
-    # service salt-minion restart
+Use the formula name with the function `state.sls`, viz. `sudo salt '*' state.sls vim`.
 
-You can understand what the minion is doing by watching the log:
+## 2. Single formula in a directory
 
-    # cat /var/log/salt/minion
+It's tidier to put formulas and their data files into a directory. To keep the clean formula name, in this case the SLS needs to be named `init.sls`.
 
-You can see that first the minion couldn't find a master at the hostname `salt`. Once this was fixed and restarted, we see
+"When an SLS formula is named init.sls it inherits the name of the directory path that contains it."
 
-    [salt.crypt       ][ERROR   ] The Salt Master has cached the public key for this node, this salt minion will wait for 10 seconds before attempting to re-authenticate
+We also need to update our `source:` line to `source: salt://vim/vimrc`.
 
-This means the minion is connected but the master hasn't yet accepted the key.
+The formula is referenced by the formula name in `init.sls`. This should match the directory name (CONFIRM WHAT HAPPENS).
 
-## Tell the master to accept the minion
+## 3. Multiple formulae in a directory
 
-Back on the master, you can see a minion wants to register:
+You can choose **not** to have an `init.sls` and define a bunch of different .sls files. These formulae are addressed with dirname.formula.
 
-    $ sudo salt-key -L
-    Accepted Keys:
-    Unaccepted Keys:
-    salt01
-    Rejected Keys:
+So you could have `edit.vim` referring to `edit/vim.sls` and `edit.emacs` referring to `edit/emacs.sls`.
 
-So let's do it and confirm:
+## Other
 
-    $ sudo salt-key -y -a salt01
-    The following keys are going to be accepted:
-    Unaccepted Keys:
-    salt01
-    Key for minion salt01 accepted.
-    salt@configmaster:~$ sudo salt-key -L
-    Accepted Keys:
-    salt01
-    Unaccepted Keys:
-    Rejected Keys:
+You can apply multiple states with `sudo salt '*' state.sls vim,dev_tools,foo`.
 
-Note that `salt-key -A` will accept all keys currently awaiting acceptance.
+# Doing things with packages
 
-## Command your minion
+## Group a bunch of packages
 
-Minions will only execute *functions* that are known to Salt. They have names like `test.ping`.
+dev_tools:
+  pkg:
+    - installed
+    - pkgs:
+      vim
+      nodejs
 
-[Full module list](http://docs.saltstack.com/en/latest/ref/modules/all/index.html#all-salt-modules).
+Notice that when a `pkgs` key is present, the `pkg` module won't try and use the ID Declaration (`dev_tools`) as a package name.
 
-    # You can address a specific minion:
-    $ sudo salt salt01 test.ping
-    salt01:
-        True
-    # or address all minions to dump their IPs:
-    $ sudo salt '*' network.ip_addrs
-    salt01:
-        - 104.131.47.206
+## YAML
 
-You can get away with not escaping the * asterisk but it's probably not a great idea.
+YAML is keys and values. Keys are in a hierarchy.
 
-The `cmd.run` function does allow arbitrary shell commands though:
+[YAML quick reference](http://www.yaml.org/refcard.html).
 
-    $ sudo salt '*' cmd.run 'uname -a'
-    salt01:
-        Linux salt01 3.13.0-24-generic #47-Ubuntu SMP Fri May 2 23:30:00 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
+# Manage your /srv/salt as a git repo called 'salt'
 
-## How to generate minions easily?
+# Requisites: like asserts
 
-So we're down to two steps:
-1. Create a droplet
-2. Log in and install `salt-minion`.
+# Service: running
 
-How to automate this? Let's snapshot the minion as a template. First we need to power it off remotely:
+# Troubleshooting
 
-    $ sudo salt salt01 system.poweroff
-    salt01:
+Run `salt-call` on the minion to see the debug logs for executing a given function. This is more info than the stream pushed back to the master.
 
-And snapshot it in the web console. When that finishes, create a new droplet `salt02` from the image.
 
-The new node looks good. It should generate its minion ID from the hostname.
-
-It does not however show up on the master. Running in debug, we can see we have cached leftovers from salt01:
-
-    # service salt-minion stop
-    salt-minion stop/waiting
-    # salt-minion -l debug
-    [DEBUG   ] Reading configuration from /etc/salt/minion
-    [INFO    ] Using cached minion ID from /etc/salt/minion_id: salt01
-    ...
-
-Whoops. Time to erase our cached identity to create a true template - [credit to this post](http://superuser.com/questions/695917/how-to-make-salt-minion-generate-new-keys):
-
-    # service salt-minion stop
-    # rm /etc/salt/pki/minion/minion_master.pub
-    # rm /etc/salt/pki/minion/minion.*
-    # cat /dev/null >/etc/salt/minion_id
-
-Take a new snapshot and destroy `salt02`, then recreate from the image. Your SSH client may freak out at the server key changing - I needed to remove the IP from `known_hosts` to forget the old server.
-
-The new minion will generate a new identity on startup - based on its hostname - and show immediately in the master:
-
-    $ sudo salt-key -L
-    Accepted Keys:
-    salt01
-    Unaccepted Keys:
-    salt02
-    Rejected Keys:
-
-So let's sanity check and we can start doing real work:
-
-    $ sudo salt-key -A -y
-    The following keys are going to be accepted:
-    Unaccepted Keys:
-    salt02
-    Key for minion salt02 accepted.
-    $ sudo salt-key -L
-    Accepted Keys:
-    salt01
-    salt02
-    Unaccepted Keys:
-    Rejected Keys:
-
-## Misc
+# Misc
 
 syndic - a proxy that runs alongside master X, accepting commands from a different master Y.
