@@ -5,13 +5,21 @@ Requirements:
 - Take an action across all Docker droplets.
 - Chromebook (and other clients like vagrant on Windows) register with config master for env updates. SECURITY!
 
-# How we want to initiate new servers
+# Next:
+understand highstate
+understand ordering
+add YAML parsing rule for .sls files to vimrc on config master
+do install.sh in order
+Increase master timeout
 
-    # apt-get update
-    # apt-get dist-upgrade -y
-    # reboot
-    # apt-get upgrade -y
-    # apt-get autoremove -y
+## My topfile:
+vim
+terminal_tools
+pkg.list_upgrades (look at output)
+upgrade_packages
+autoremove_packages
+reboot_required (look at output)
+system.reboot (if needed)
 
 # Salt concepts
 
@@ -19,6 +27,8 @@ Grain - a grain of information about a minion. Sent from minion -> master. Used 
 Pillar - a tree of data kept on the master. Sent from master -> minions on a need-to-know basis. A State can have parameters filled in with data taken from a Pillar.
 Nodegroup - a logical group of minions defined by a bunch of selectors. Used for targeting commands.
 State - 
+Highstate - 
+Top file - 
 
 # Set up master State
 
@@ -57,9 +67,25 @@ Note:
 - The `salt://` protocol is just the filesystem based at `/srv/salt`.
 - Lines 2 and 3 can be short-handed into just `pkg.installed`. This is a YAMLism.
 
-This is a formula. The naming of the formula is the `vim:` line. The filename could be anything.
+This is a formula. An aside:
 
 Use the formula name with the function `state.sls`, viz. `sudo salt '*' state.sls vim`.
+
+It's a gotcha so a sidebar:
+
+### SLS File Namespace
+
+    The namespace for SLS files follows a few simple rules:
+
+    1. The .sls is discarded (i.e. webserver.sls becomes webserver).
+
+    2. Subdirectories can be used for better organization.
+      - Each subdirectory is represented by a dot.
+      - webserver/dev.sls is referred to as webserver.dev.
+
+    3. A file called init.sls in a subdirectory is referred to by the path of the directory. So, webserver/init.sls is referred to as webserver.
+
+    4. If both webserver.sls and webserver/init.sls happen to exist, webserver/init.sls will be ignored and webserver.sls will be the file referred to as webserver.
 
 ## 2. Single formula in a directory
 
@@ -108,8 +134,64 @@ YAML is keys and values. Keys are in a hierarchy.
 
 # Troubleshooting
 
+My minion isn't responding. Seems common, even test.ping.
+- Increase timeout - definitely
+- How to check jobs?
+  - job results are cached for 24hrs!
+  - On master, `salt-run jobs.list_jobs`, get the job ID, `salt-run jobs.lookup_jid <id>`
+
+## Debug minion
+
 Run `salt-call` on the minion to see the debug logs for executing a given function. This is more info than the stream pushed back to the master.
 
+# Good practices
+
+Start developing on a flat foo.sls and only put in a directory when you need it.
+
+# Is Salt good?
+
+Do we believe this?:
+"Two major philosophies exist on the subject, to either execute in an imperative fashion where things are executed in the order in which they are defined, or in a declarative fashion where dependencies need to be mapped between objects.
+Imperative ordering is finite and generally considered easier to write, but declarative ordering is much more powerful and flexible but generally considered more difficult to create.
+Salt has been created to get the best of both worlds. States are evaluated in a finite order, which guarantees that states are always executed in the same order, and the states runtime is declarative, making Salt fully aware of dependencies via the requisite system."
+
+The 'pkg' shorthand where it takes the parent key (?) as name is confusing when you try and infer a model from it.
+
+## Weirdness
+
+### Gotchas
+
+The default shell is /bin/sh, not /bin/bash.
+
+### YAML will get you.
+
+1. Look at:
+
+    vim:
+      pkg:
+        - installed
+        - pkgs:
+          - foo
+          - bar
+
+Why does pkgs need a dash but pkg does not?
+
+2. Special characters in strings. Good luck setting your cmd.run name: to [[ ! -f /var/run/reboot-required.pkgs ]] || cat /var/run/reboot-required.pkgs
+
+3. Need an empty list (for example, match 'salt*' in the highstate but don't do anything)? You need:
+  my_key: []
+
+
+### Which goes first, module function or parameter?
+
+What is this crap?
+
+    apt-get autoremove -y:
+      - cmd.run
+
+## Issues
+
+No apt-get autoremove, https://github.com/saltstack/salt/issues/15529
 
 # Misc
 
