@@ -11,15 +11,6 @@ http://docs.saltstack.com/en/latest/ref/states/ordering.html
 add YAML parsing rule for .sls files to vimrc on config master
 do install.sh in order
 
-## My topfile:
-vim
-terminal_tools
-pkg.list_upgrades (look at output)
-upgrade_packages
-autoremove_packages
-reboot_required (look at output)
-system.reboot (if needed)
-
 # Salt concepts
 
 Grain - a grain of information about a minion. Sent from minion -> master. Used for targeting commands.
@@ -51,6 +42,9 @@ In `/etc/salt/master`, set `timeout: 30` or similar.
 The `salt` command can be run with `-v` to dump the job ID for everything you run. This is great for getting the results of historical commands.
 
 The master config file doesn't seem to allow a permanent setting, so I use `alias salt='sudo salt -v'` to force it every time.
+
+  - Add note about lookup_jid
+  - This should log unresponsive minions.
 
 ### Test runs are your friend
 
@@ -196,6 +190,8 @@ Why does pkgs need a dash but pkg does not?
 
 3. Need an empty list (for example, match 'salt*' in the highstate but don't do anything)? You need:
   my_key: []
+
+4. Want to validate your YAML? Good luck. Best I found is to open an .sls file in Sublime Text and View -> Syntax -> Open all with current extension as... -> YAML
 
 ### Require
 
