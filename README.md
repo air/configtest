@@ -10,7 +10,6 @@ http://docs.saltstack.com/en/latest/topics/tutorials/starting_states.html
 http://docs.saltstack.com/en/latest/ref/states/ordering.html
 add YAML parsing rule for .sls files to vimrc on config master
 do install.sh in order
-Increase master timeout
 
 ## My topfile:
 vim
@@ -40,6 +39,18 @@ Ever used `/srv` before? It's where you keep data for services, as defined in ht
 ## IDEMPOTENCY
 
 You define the target state. The tool will try to get there. If it's already there, you can keep running the tool and nothing bad will happen.
+
+## Help yourself, don't wreck yourself
+
+### Increase master timeout
+
+In `/etc/salt/master`, set `timeout: 30` or similar.
+
+### Use verbose
+
+The `salt` command can be run with `-v` to dump the job ID for everything you run. This is great for getting the results of historical commands.
+
+The master config file doesn't seem to allow a permanent setting, so I use `alias salt='sudo salt -v'` to force it every time.
 
 ### Test runs are your friend
 
@@ -186,6 +197,11 @@ Why does pkgs need a dash but pkg does not?
 3. Need an empty list (for example, match 'salt*' in the highstate but don't do anything)? You need:
   my_key: []
 
+### Require
+
+What can you require? pkg: foo, ok. What else? What does this really do?
+
+Why are requires specified LAST in all the examples?
 
 ### Which goes first, module function or parameter?
 
