@@ -6,8 +6,8 @@ Requirements:
 - Chromebook (and other clients like vagrant on Windows) register with config master for env updates. SECURITY!
 
 # Next:
-understand highstate
-understand ordering
+http://docs.saltstack.com/en/latest/topics/tutorials/starting_states.html
+http://docs.saltstack.com/en/latest/ref/states/ordering.html
 add YAML parsing rule for .sls files to vimrc on config master
 do install.sh in order
 Increase master timeout
@@ -29,6 +29,7 @@ Nodegroup - a logical group of minions defined by a bunch of selectors. Used for
 State - 
 Highstate - 
 Top file - 
+Watcher - 
 
 # Set up master State
 
@@ -39,6 +40,10 @@ Ever used `/srv` before? It's where you keep data for services, as defined in ht
 ## IDEMPOTENCY
 
 You define the target state. The tool will try to get there. If it's already there, you can keep running the tool and nothing bad will happen.
+
+### Test runs are your friend
+
+Whack a `test=True` on the end of your salt commands to do a dry run. The stuff that *would* happen comes up in yellow.
 
 # Understanding States
 
