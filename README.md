@@ -6,10 +6,9 @@ Requirements:
 - Chromebook (and other clients like vagrant on Windows) register with config master for env updates. SECURITY!
 
 # Next:
-http://docs.saltstack.com/en/latest/topics/tutorials/starting_states.html
-http://docs.saltstack.com/en/latest/ref/states/ordering.html
-add YAML parsing rule for .sls files to vimrc on config master
-do install.sh in order
+	http://docs.saltstack.com/en/latest/topics/tutorials/starting_states.html
+	http://docs.saltstack.com/en/latest/ref/states/ordering.html
+	add YAML parsing rule for .sls files to vimrc on config master
 
 # Salt concepts
 
@@ -49,6 +48,8 @@ The master config file doesn't seem to allow a permanent setting, so I use `alia
 ### Test runs are your friend
 
 Whack a `test=True` on the end of your salt commands to do a dry run. The stuff that *would* happen comes up in yellow.
+
+Just for fun some commands will choke on this, e.g. `TypeError encountered executing pkg.refresh_db: refresh_db() takes no arguments (1 given)`.
 
 # Understanding States
 
@@ -169,11 +170,20 @@ The 'pkg' shorthand where it takes the parent key (?) as name is confusing when 
 
 ## Weirdness
 
+### What the fuck is a State
+
+http://steveko.wordpress.com/2014/02/17/one-week-of-salt-frustrations-and-reflections/
+
+You WANT a clear, deep grasp of the concepts, so you can dig yourself out of trouble. You will NOT have this. You WILL be developing with a shaky idea of States.
+Even with high focus you will get along by copy-pasting people who understand it better. Then you will hit a roadblock of `Too many functions declared in state "pkg" in sls docker` and not have a fucking clue what is up.
+
 ### Gotchas
 
 The default shell is /bin/sh, not /bin/bash.
 
 ### YAML will get you.
+
+http://docs.saltstack.com/en/latest/topics/troubleshooting/yaml_idiosyncrasies.html
 
 1. Look at:
 
@@ -198,6 +208,12 @@ Why does pkgs need a dash but pkg does not?
 What can you require? pkg: foo, ok. What else? What does this really do?
 
 Why are requires specified LAST in all the examples?
+
+The examples are all the same. Depend on a pkg.installed or a group.
+	http://stackoverflow.com/questions/16362423/how-do-i-make-one-custom-state-dependent-on-another
+	http://intothesaltmine.org/how_to_use_require_and_watch_statements.html
+
+The IDing of states/formulae/functions makes this difficult to understand.
 
 ### Which goes first, module function or parameter?
 
