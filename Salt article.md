@@ -72,7 +72,7 @@ That's our dirty root-work done. Log out and SSH back in as `salt` using your ne
 
 ### From zero to master in one minute
 
-As user salt:
+As user `salt`:
 
     $ sudo echo "sudo is working, I feel like an internet hero"
     $ sudo add-apt-repository -y ppa:saltstack/salt
