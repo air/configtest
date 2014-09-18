@@ -4,7 +4,7 @@
 
 This article explains how to combine [Salt's](http://www.saltstack.com/community/) simple config management with the power of Digital Ocean's snapshot feature.
 
-First, the basics. I recommend the [tutorial series on this site](https://www.digitalocean.com/community/tutorial_series/an-introduction-to-salt) to get you up and running with Salt, namely:
+First, the basics. You can find a [tutorial series on this site](https://www.digitalocean.com/community/tutorial_series/an-introduction-to-salt) to get you up and running with Salt, namely:
 
 1. [How to Install Salt on Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-install-salt-on-ubuntu-12-04) illustrates how to get a simple master/minion pair running on the same server. You might want to try this first to get a feel for how masters and minions communicate. In the guide below we'll install a more practical setup.
 1. [How to Create Your First Salt Formula](https://www.digitalocean.com/community/tutorials/how-to-create-your-first-salt-formula). This is essential reading to learn how to command your new army of droplets.
