@@ -227,7 +227,7 @@ And in your DigitalOcean web console, snapshot it. Call the image something like
 
 When the snapshot finishes, create a new droplet `salt02` from the image.
 
-When salt02 starts up everything will happen by magic, namely:
+When `salt02` starts up everything will happen by magic, namely:
 
 1. Thanks to the snapshot, `salt02` already has the `salt-minion` package installed and config ready to go! Great.
 1. As the `salt-minion` service starts, it will generate its new identity.
