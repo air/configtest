@@ -4,7 +4,7 @@
 
 This article explains how to combine [Salt's](http://www.saltstack.com/community/) simple config management with the power of Digital Ocean's snapshot feature.
 
-First, the basics. I recommend the [tutorial series on this site](https://www.digitalocean.com/community/tutorial_series/an-introduction-to-salt) to get you up and running with Salt, namely:
+First, the basics. You can find a [tutorial series on this site](https://www.digitalocean.com/community/tutorial_series/an-introduction-to-salt) to get you up and running with Salt, namely:
 
 1. [How to Install Salt on Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-install-salt-on-ubuntu-12-04) illustrates how to get a simple master/minion pair running on the same server. You might want to try this first to get a feel for how masters and minions communicate. In the guide below we'll install a more practical setup.
 1. [How to Create Your First Salt Formula](https://www.digitalocean.com/community/tutorials/how-to-create-your-first-salt-formula). This is essential reading to learn how to command your new army of droplets.
@@ -72,7 +72,7 @@ That's our dirty root-work done. Log out and SSH back in as `salt` using your ne
 
 ### From zero to master in one minute
 
-As user salt:
+As user `salt`:
 
     $ sudo echo "sudo is working, I feel like an internet hero"
     $ sudo add-apt-repository -y ppa:saltstack/salt
@@ -227,7 +227,7 @@ And in your DigitalOcean web console, snapshot it. Call the image something like
 
 When the snapshot finishes, create a new droplet `salt02` from the image.
 
-When salt02 starts up everything will happen by magic, namely:
+When `salt02` starts up everything will happen by magic, namely:
 
 1. Thanks to the snapshot, `salt02` already has the `salt-minion` package installed and config ready to go! Great.
 1. As the `salt-minion` service starts, it will generate its new identity.
