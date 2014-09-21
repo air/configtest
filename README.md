@@ -10,15 +10,6 @@ http://docs.saltstack.com/en/latest/topics/tutorials/starting_states.html
 http://docs.saltstack.com/en/latest/ref/states/ordering.html
 add YAML parsing rule for .sls files to vimrc on config master
 
-## My topfile:
-vim
-terminal_tools
-pkg.list_upgrades (look at output)
-upgrade_packages
-autoremove_packages
-reboot_required (look at output)
-system.reboot (if needed)
-
 # Salt concepts
 
 Grain - a grain of information about a minion. Sent from minion -> master. Used for targeting commands.
@@ -192,7 +183,7 @@ Running salt can do different things:
   1. Reach a state, e.g. with a state.sls file 
   1. Run a module.
 
-Don't get them confused. You can't 
+Don't get them confused. You can't put a module function in a state.
 
 ### YAML will get you.
 
