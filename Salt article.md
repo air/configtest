@@ -60,11 +60,32 @@ The [first Salt tutorial](https://www.digitalocean.com/community/tutorials/how-t
 
 Create a new Ubuntu droplet called `configmaster` and log in as root. At create time, **specify an SSH key** because we are adults (it's way more secure than a password). [This tutorial is a great explainer on SSH keys](https://www.digitalocean.com/community/tutorials/how-to-use-ssh-keys-with-digitalocean-droplets).
 
-Let's set up a new user and give them sudo privileges:
+Let's set up a new user for Salt:
 
-    # adduser salt
-    # # <^>(set a password and default all the other questions)<^>
-    # visudo
+    adduser salt
+
+When prompted, set a password and default all the other questions:
+
+    Adding user `salt' ...
+    Adding new group `salt' (1001) ...
+    Adding new user `salt' (1001) with group `salt' ...
+    Creating home directory `/home/salt' ...
+    Copying files from `/etc/skel' ...
+    Enter new UNIX password:
+    Retype new UNIX password:
+    passwd: password updated successfully
+    Changing the user information for deleteme
+    Enter the new value, or press ENTER for the default
+            Full Name []:
+            Room Number []:
+            Work Phone []:
+            Home Phone []:
+            Other []:
+    Is the information correct? [Y/n] y
+
+Finally, we need to edit sudo privileges:
+
+    visudo
 
 Notice that `visudo` launches an editor on the `/etc/sudoers` file. Make it look like this and save it out with `Ctrl-X`:
 
@@ -76,15 +97,27 @@ That's our dirty root-work done. Log out and SSH back in as `salt` using your ne
 
 ### From zero to salt-master in one minute
 
-As user `salt`:
+As user `salt` we want to install the `salt-master` package:
 
-    $ sudo echo "sudo is working, I feel like an internet hero"
-    $ sudo add-apt-repository -y ppa:saltstack/salt
-    $ sudo apt-get update
-    $ sudo apt-get install -y salt-master
-    $ service --status-all 2>&1 | grep salt
+    sudo echo "This verifies sudo is working, I feel like an internet hero"
+    sudo add-apt-repository -y ppa:saltstack/salt
+    sudo apt-get update
+    sudo apt-get install -y salt-master
+
+We can check the service exists with:
+
+    service --status-all 2>&1 | grep salt
+
+Which should display:
+
      [ + ]  salt-master
-    $ sudo salt-key -L
+
+Finally we can ask the master to list any minions it knows about:
+
+    sudo salt-key -L
+    
+Which should show the empty groups:
+
     Accepted Keys:
     Unaccepted Keys:
     Rejected Keys:
@@ -110,20 +143,26 @@ Crucially, we're only going to do this **once**. All minions after the first wil
 
 Create a new droplet called `salt01`. Log in as root and:
 
-    # add-apt-repository -y ppa:saltstack/salt
-    # apt-get update
-    # apt-get install -y salt-minion
-    # service --status-all 2>&1 | grep salt
+    add-apt-repository -y ppa:saltstack/salt
+    apt-get update
+    apt-get install -y salt-minion
+    service --status-all 2>&1 | grep salt
 
-There's one item of config business. We need to set the location of the master (an IP address for the moment). Edit the file as below and set it:
+There's one item of config business. We need to set the location of the master (an IP address for the moment). Edit the file:
 
-    # vi /etc/salt/minion
-    # # set the appropriate line to read 'master: <^><your configmaster IP><^>'
-    # service salt-minion restart
+    vi /etc/salt/minion
+
+Remove the comment from the `master` line, and add your master's IP address:
+
+    master: <^><your configmaster IP><^>
+
+And restart the service to pick up the changes:
+
+    service salt-minion restart
 
 You can understand what the minion is doing by watching the log:
 
-    # cat /var/log/salt/minion
+    cat /var/log/salt/minion
 
 Have a look now. You can see that at first, the minion couldn't find a master at the default hostname `salt`. Once this was fixed and restarted, we see
 
@@ -133,9 +172,12 @@ This means the minion is connected but the master hasn't yet *Accepted* the key.
 
 ### I for one welcome our new minion
 
-Back on the master (as user `salt`), you can see a minion wants to register:
+Back on the master (as user `salt`), you can see a minion wants to register using:
 
-    $ sudo salt-key -L
+    sudo salt-key -L
+
+Which should display:
+
     Accepted Keys:
     Unaccepted Keys:
     salt01
@@ -143,13 +185,15 @@ Back on the master (as user `salt`), you can see a minion wants to register:
 
 So let's be a nice doorman and let them in:
 
-    $ sudo salt-key -y -a salt01
+    sudo salt-key -y -a salt01
+    
     The following keys are going to be accepted:
     Unaccepted Keys:
     salt01
     Key for minion salt01 accepted.
 
-    $ sudo salt-key -L
+    sudo salt-key -L
+    
     Accepted Keys:
     salt01
     Unaccepted Keys:
@@ -165,15 +209,17 @@ Minions can execute *functions* from *execution modules* that are defined by Sal
 
 The [full module list](http://docs.saltstack.com/en/latest/ref/modules/all/index.html#all-salt-modules) is pretty exhaustive.
 
-On the master, you can *target* minions in various ways:
+On the master, you can *target* minions in various ways. You can address a specific minion:
 
-    $ # You can address a specific minion:
-    $ sudo salt salt01 test.ping
+    sudo salt salt01 test.ping
+    
     salt01:
         True
 
-    $ # or address all minions, to e.g. dump their IPs:
-    $ sudo salt '*' network.ip_addrs
+Or address all minions, to e.g. dump their IPs:
+
+    sudo salt '*' network.ip_addrs
+
     salt01:
         - 123.456.78.90
 
@@ -181,7 +227,8 @@ You can get away with not escaping the `*` asterisk but it's probably not a grea
 
 The `cmd.run` function allows arbitrary shell commands:
 
-    $ sudo salt '*' cmd.run 'uname -a'
+    sudo salt '*' cmd.run 'uname -a'
+
     salt01:
         Linux salt01 3.13.0-24-generic #47-Ubuntu SMP Fri May 2 23:30:00 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
 
@@ -197,14 +244,15 @@ When the `salt-minion` service starts up, it generates an identity based on the 
 
 We need to remove that for our template - [credit to this post for the method](http://superuser.com/questions/695917/how-to-make-salt-minion-generate-new-keys). On your `salt01` minion:
 
-    # service salt-minion stop
-    # rm /etc/salt/pki/minion/minion_master.pub
-    # rm /etc/salt/pki/minion/minion.*
-    # cat /dev/null >/etc/salt/minion_id
+    service salt-minion stop
+    rm /etc/salt/pki/minion/minion_master.pub
+    rm /etc/salt/pki/minion/minion.*
+    cat /dev/null >/etc/salt/minion_id
 
 If we didn't do this, new machines created from template would all have a cached identity of `salt01`. We would see this on startup:
 
-    # salt-minion -l debug
+    salt-minion -l debug
+
     [DEBUG   ] Reading configuration from /etc/salt/minion
     [INFO    ] Using cached minion ID from /etc/salt/minion_id: salt01
     ...
@@ -215,7 +263,7 @@ By clearing the cached identity we avoid this, ensuring that minions created fro
 
 Since we just blew away salt01's identity, we need to tell the master not to expect that key any more:
 
-    $ sudo salt-key -D -y
+    sudo salt-key -D -y
 
 The `-D` means '(D)elete all minion keys'.
 
@@ -225,7 +273,7 @@ Digital Ocean lets you take a *snapshot*, which creates an *image*. Images can b
 
 First we need to power off `salt01`:
 
-    # poweroff
+    poweroff
 
 And in your DigitalOcean web console, snapshot it. Call the image something like 'Salt minion template'.
 
@@ -245,14 +293,16 @@ After the snapshot, `salt01` will automatically be powered on, and will rejoin e
 
 We're all done. We have two fresh minions asking to join the master, so let them in:
 
-    $ sudo salt-key -L
+    sudo salt-key -L
+    
     Accepted Keys:
     Unaccepted Keys:
     salt01
     salt02
     Rejected Keys:
 
-    $ sudo salt-key -A -y
+    sudo salt-key -A -y
+    
     The following keys are going to be accepted:
     Unaccepted Keys:
     salt01
@@ -260,8 +310,10 @@ We're all done. We have two fresh minions asking to join the master, so let them
     Key for minion salt02 accepted.
     Key for minion salt02 accepted.
 
-    $ # prove they're different    
-    $ sudo salt '*' cmd.run 'uname -a; uptime'
+Let's prove they're different:
+
+    sudo salt '*' cmd.run 'uname -a; uptime'
+    
     salt02:
         Linux salt02 3.13.0-24-generic #47-Ubuntu SMP Fri May 2 23:30:00 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
          18:37:07 up 5 min,  1 user,  load average: 0.01, 0.03, 0.02
@@ -279,7 +331,8 @@ You're free to update the custom image and make a new snapshot whenever you feel
 
 Sysadmins will be comforted to learn that DigitalOcean takes care of both the hostname and MAC address on new servers. You can confirm this with e.g.
 
-    $ sudo salt '*' network.hw_addr eth0
+    sudo salt '*' network.hw_addr eth0
+    
     salt02:
         04:06:28:41:19:01
     salt01:
