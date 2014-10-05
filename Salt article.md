@@ -375,7 +375,7 @@ And using this job ID, you can then check full output:
 
 ## How to use your new managed system
 
-**Whenever you need a new droplet in future, create it from your Salt Minion image**. As a new droplet starts up, it will automatically register with your config management network (just remember to Accept it).
+**Whenever you need a new droplet in future, create it from your Salt Minion image**. As a new droplet starts up, it will automatically register with your config management network - just remember to Accept it with e.g. `sudo salt-key -A -y`.
 
 You're free to update the custom image and make a new snapshot whenever you feel like it - just remember to clean the cached identity beforehand.
 
