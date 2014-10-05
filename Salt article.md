@@ -233,6 +233,8 @@ Resulting in:
     salt01:
         - 123.456.78.90
 
+Notice that your minion may return multiple IPs if you're using [Private Networking](https://www.digitalocean.com/community/tutorials/how-to-set-up-and-use-digitalocean-private-networking).
+
 You can get away with not escaping the `*` asterisk but it's probably not a great habit.
 
 The `cmd.run` function allows arbitrary shell commands:
@@ -301,7 +303,11 @@ When `salt02` starts up everything will happen by magic, namely:
 
 ### What happens to the droplet we snapshotted?
 
-After the snapshot, `salt01` will automatically be powered on, and will rejoin exactly as above using a fresh `salt01` identity.
+After the snapshot, `salt01` will automatically be powered on and goes through this behaviour:
+
+1. `salt01` notices that cached identity files are not present, and so
+1. Generates a new minion identity and caches it, and finally
+1. Connects to the master as a new minion.
 
 ## Step four - Accept your minion army
 
@@ -342,6 +348,30 @@ Showing:
     salt01:
         Linux salt01 3.13.0-24-generic #47-Ubuntu SMP Fri May 2 23:30:00 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
          18:37:07 up 8 min,  1 user,  load average: 0.00, 0.01, 0.01
+
+## Upgrade all your droplets
+
+To illustrate the power of the new approach, how about updating the packages on all droplets in one shot? Try:
+
+    sudo salt '*' cmd.run 'apt-get update; apt-get dist-upgrade -y'
+
+Since this operation can take a minute or two, the command may return while it's still in progress on the minions.
+At any time, you can get the ID of the last job you ran with:
+
+    sudo salt-run jobs.list_jobs | head -6
+
+To get a job listing with the job ID listed first:
+
+    '20141005133439695132':
+      Arguments:
+      - apt-get update; apt-get dist-upgrade -y
+      Function: cmd.run
+      StartTime: 2014, Oct 05 13:34:39.695132
+      Target: '*'
+
+And using this job ID, you can then check full output:
+
+    sudo salt-run jobs.lookup_jid <^>your_job_id<^>
 
 ## How to use your new managed system
 
