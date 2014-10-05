@@ -309,15 +309,20 @@ We're all done. We have two fresh minions asking to join the master, so let them
 
     sudo salt-key -L
 
-Resulting in:    
+To see the waiting minions:
+
     Accepted Keys:
     Unaccepted Keys:
     salt01
     salt02
     Rejected Keys:
 
+Let's accept them all in one shot:
+
     sudo salt-key -A -y
-    
+
+Resulting in:
+
     The following keys are going to be accepted:
     Unaccepted Keys:
     salt01
@@ -328,7 +333,9 @@ Resulting in:
 Let's prove they're different:
 
     sudo salt '*' cmd.run 'uname -a; uptime'
-    
+
+Showing:
+
     salt02:
         Linux salt02 3.13.0-24-generic #47-Ubuntu SMP Fri May 2 23:30:00 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
          18:37:07 up 5 min,  1 user,  load average: 0.01, 0.03, 0.02
@@ -347,7 +354,9 @@ You're free to update the custom image and make a new snapshot whenever you feel
 Sysadmins will be comforted to learn that DigitalOcean takes care of both the hostname and MAC address on new servers. You can confirm this with e.g.
 
     sudo salt '*' network.hw_addr eth0
-    
+
+Resulting in:
+
     salt02:
         04:06:28:41:19:01
     salt01:
