@@ -7,7 +7,11 @@ This article explains how to combine [Salt's](http://www.saltstack.com/community
 First, the basics. You can find a [tutorial series on this site](https://www.digitalocean.com/community/tutorial_series/an-introduction-to-salt) to get you up and running with Salt, namely:
 
 1. [How to Install Salt on Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-install-salt-on-ubuntu-12-04) illustrates how to get a simple master/minion pair running on the same server. You might want to try this first to get a feel for how masters and minions communicate. In the guide below we'll install a more practical setup.
-1. [How to Create Your First Salt Formula](https://www.digitalocean.com/community/tutorials/how-to-create-your-first-salt-formula). This is essential reading to learn how to command your new army of droplets.
+1. [How to Create Your First Salt Formula](https://www.digitalocean.com/community/tutorials/how-to-create-your-first-salt-formula). Once you're up and running, this is essential reading to learn how to command your new army of droplets.
+
+This guide is standalone and assumes you're starting from scratch.
+
+If you want to reuse your setup from tutorial 1, you can skip to **Set up a minion** below. A clean start is preferred though, since we're going to create a Salt user rather than work directly with `root`.
 
 ## What's my motivation?
 
@@ -33,7 +37,7 @@ Let's get clever with our own template, because:
 
 ## Here's the plan
 
-1. Create a *master* server. You could use an existing machine - say, [from the first tutorial](https://www.digitalocean.com/community/tutorials/how-to-install-salt-on-ubuntu-12-04) - to save a few beer tokens.
+1. Create a *master* server. Optionally you could use an existing machine - say, [from the first tutorial](https://www.digitalocean.com/community/tutorials/how-to-install-salt-on-ubuntu-12-04) - to save a few beer tokens, but we'll assume you're starting from scratch.
 1. Create a *minion* - thank you Salt developers for using this word - and test it.
 1. The fun part: Tweak and snapshot the minion as a template for future droplets.
 1. Demonstrate your new powers.
