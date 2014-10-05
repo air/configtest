@@ -56,7 +56,7 @@ The [first Salt tutorial](https://www.digitalocean.com/community/tutorials/how-t
 - The master server can be managed along with everyone else. This is handy.
 - You run a small risk of screwing up the master when you accidentally send a `sudo rm -rf /*` to all minions. Hint: Don't do this.
 
-## 1. Create the master
+## Step one - Create the master
 
 Create a new Ubuntu droplet called `configmaster` and log in as root. At create time, **specify an SSH key** because we are adults (it's way more secure than a password). [This tutorial is a great explainer on SSH keys](https://www.digitalocean.com/community/tutorials/how-to-use-ssh-keys-with-digitalocean-droplets).
 
@@ -74,7 +74,7 @@ Notice that `visudo` launches an editor on the `/etc/sudoers` file. Make it look
 
 That's our dirty root-work done. Log out and SSH back in as `salt` using your new password.
 
-### From zero to master in one minute
+### From zero to salt-master in one minute
 
 As user `salt`:
 
@@ -102,7 +102,7 @@ For debug purposes, the salt-master log is at e.g. `cat /var/log/salt/master`. W
 
 By default the Salt master listens on ports 4505 and 4506 on all interfaces (0.0.0.0). This is good to know when you start adding firewalls.
 
-## 2. Set up a minion
+## Step two - Set up a minion
 
 We're going to do the absolute minimum to *bootstrap* this new server.
 
@@ -187,11 +187,11 @@ The `cmd.run` function allows arbitrary shell commands:
 
 So we've created a minion. Do we want to do this routine every time we add a new one? Nope. Let's create a DigitalOcean image.
 
-## 3. Make a cookie cutter
+## Step three - Make a template from the snapshot
 
 Now we understand what's going on, we're going to make a template out of `salt01`. This requires a spot of minor surgery to remove its identity.
 
-### I am not a number, I am a free droplet
+### Reset your minion's identity
 
 When the `salt-minion` service starts up, it generates an identity based on the hostname. This `minion_id`, along with a new key are cached to disk.
 
@@ -209,9 +209,9 @@ If we didn't do this, new machines created from template would all have a cached
     [INFO    ] Using cached minion ID from /etc/salt/minion_id: salt01
     ...
 
-Oh no! Identity theft. An army of identical clones worked for The Empire, but not for us.
+By clearing the cached identity we avoid this, ensuring that minions created from template generate a fresh identity.
 
-### Don't confuse the master
+### Tell the master about the identity change
 
 Since we just blew away salt01's identity, we need to tell the master not to expect that key any more:
 
@@ -237,11 +237,11 @@ When `salt02` starts up everything will happen by magic, namely:
 1. As the `salt-minion` service starts, it will generate its new identity.
 1. `salt02` will then connect to the master.
 
-### Get up salt01, you're fine
+### What happens to the droplet we snapshotted?
 
 After the snapshot, `salt01` will automatically be powered on, and will rejoin exactly as above using a fresh `salt01` identity.
 
-## 4. With two minions I am unstoppable
+## Step four - Accept your minion army
 
 We're all done. We have two fresh minions asking to join the master, so let them in:
 
@@ -269,7 +269,7 @@ We're all done. We have two fresh minions asking to join the master, so let them
         Linux salt01 3.13.0-24-generic #47-Ubuntu SMP Fri May 2 23:30:00 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
          18:37:07 up 8 min,  1 user,  load average: 0.00, 0.01, 0.01
 
-## You just won config management
+## How to use your new managed system
 
 **Whenever you need a new droplet in future, create it from your Salt Minion image**. As a new droplet starts up, it will automatically register with your config management network (just remember to Accept it).
 
