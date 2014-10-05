@@ -409,6 +409,6 @@ Here's the great news: you can set up security steps **once** in Salt and use th
   - Install and update packages
   - Perform basic security steps on a new droplet: securing `sshd`, setting up firewalls
 
-For help on any of this, reach out to the responsive [Salt community](www.saltstack.com/community/) or leave a comment on this article.
+For help on any of this, reach out to the responsive [Salt community](http://www.saltstack.com/community/) or leave a comment on this article.
 
 Happy minioning!
