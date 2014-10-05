@@ -186,14 +186,20 @@ Which should display:
 So let's be a nice doorman and let them in:
 
     sudo salt-key -y -a salt01
-    
+
+Resulting in:
+
     The following keys are going to be accepted:
     Unaccepted Keys:
     salt01
     Key for minion salt01 accepted.
 
+We can verify with the List command:
+
     sudo salt-key -L
-    
+
+Resulting in:
+
     Accepted Keys:
     salt01
     Unaccepted Keys:
@@ -212,13 +218,17 @@ The [full module list](http://docs.saltstack.com/en/latest/ref/modules/all/index
 On the master, you can *target* minions in various ways. You can address a specific minion:
 
     sudo salt salt01 test.ping
-    
+
+Resulting in:
+
     salt01:
         True
 
 Or address all minions, to e.g. dump their IPs:
 
     sudo salt '*' network.ip_addrs
+
+Resulting in:
 
     salt01:
         - 123.456.78.90
@@ -228,6 +238,8 @@ You can get away with not escaping the `*` asterisk but it's probably not a grea
 The `cmd.run` function allows arbitrary shell commands:
 
     sudo salt '*' cmd.run 'uname -a'
+
+Resulting in:
 
     salt01:
         Linux salt01 3.13.0-24-generic #47-Ubuntu SMP Fri May 2 23:30:00 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
@@ -252,6 +264,8 @@ We need to remove that for our template - [credit to this post for the method](h
 If we didn't do this, new machines created from template would all have a cached identity of `salt01`. We would see this on startup:
 
     salt-minion -l debug
+
+Resulting in:
 
     [DEBUG   ] Reading configuration from /etc/salt/minion
     [INFO    ] Using cached minion ID from /etc/salt/minion_id: salt01
@@ -294,7 +308,8 @@ After the snapshot, `salt01` will automatically be powered on, and will rejoin e
 We're all done. We have two fresh minions asking to join the master, so let them in:
 
     sudo salt-key -L
-    
+
+Resulting in:    
     Accepted Keys:
     Unaccepted Keys:
     salt01
